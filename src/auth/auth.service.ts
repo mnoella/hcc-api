@@ -1,79 +1,40 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { AuthEntity } from './auth.entity';
-import { Repository } from 'typeorm';
+import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
+import { UserStatus } from 'src/users/entities/user.entity';
 
 
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly jwtService: JwtService,
-        private readonly configService: ConfigService,
-
-        @InjectRepository(AuthEntity)
-        private authenticationRepository: Repository<AuthEntity>
+        private jwtService: JwtService,
+        private usersService: UsersService,
     ) { }
 
-    async signup(email: string, password: string) {
-        const saltRounds = 10;
-        const hash = await bcrypt.hash(password, saltRounds);
-        const newAuth = this.authenticationRepository.create({
-            email: email,
-            hash: hash,
-            role: 'joueur',
-            isValidated: false // doit etre validé par le club 
-        });
-
-        return this.authenticationRepository.save(newAuth);
-    }
-
-    async signin(email: string, password: string) {
-        const user = await this.authenticationRepository.findOne({
-            where: {
-                email: email,
-            },
-        });
-
+    async validateUser(email: string, password: string): Promise<any> {
+        const user = await this.usersService.findByEmail(email);
         if (!user) {
-            throw new Error('Utilisateur non trouvé');
+          throw new UnauthorizedException("Invalid credentials");
         }
-
-        if(!user.isValidated) {
-            throw new Error("Compte en attente de validation");
+        if (user.status !== UserStatus.ACTIVE) {
+          throw new UnauthorizedException("Account not activated yet");
         }
-
-        const isAuthenticated = await bcrypt.compare(password, user.hash);
-
-        if (isAuthenticated) {
-            const secret = this.configService.get<string>('JWT_SECRET');
-            return this.jwtService.sign(
-                {
-                    email: user.email,
-                    role: user.role
-                },
-                { secret, expiresIn: '1h' }
-            );
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+          throw new UnauthorizedException("Invalid credentials");
         }
-
-        return;
-
+        const { password: _, ...result } = user;
+        return result;
     }
 
-
-    async validateUser(id: number, role: string){
-        const user = await this.authenticationRepository.findOne({where: {id}});
-
-        if(!user) {
-            throw new Error("Urilisateur introuvable");
-        }
-
-        user.isValidated = true;
-        user.role = role; // un admin attribut le role
-        return this.authenticationRepository.save(user);
+    async login(user: any) {
+        const payload = { email: user.email, sub: user.id, role: user.role};
+        return { access_token: this.jwtService.sign(payload),}
     }
+
+    async register(userData: any){
+        return this.usersService.create(userData);
+    }
+
 }
-
-

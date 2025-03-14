@@ -1,19 +1,18 @@
 import { Module } from '@nestjs/common';
-// import { AppController } from './app.controller';
-// import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { ActualiteModule } from './actualite/actualite.module';
-import { MatchModule } from './match/match.module';
+import { UsersModule } from './match/match.module';
+import { MatchesModule } from './match/match.module';
+import { NewsModule } from './match/match.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { AdherentModule } from './adherent/adherent.module';
+
 
 @Module({
   // Configuration globale de TypeORM
   imports: [
     TypeOrmModule.forRoot({
       type: 'sqlite',
-      database: 'database.sqlite',
+      database: 'hcc.sqlite',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
@@ -22,8 +21,9 @@ import { AdherentModule } from './adherent/adherent.module';
       isGlobal: true,
     }),
     AuthModule, 
-    ActualiteModule, 
-    MatchModule, AdherentModule
+    UsersModule,
+    NewsModule,
+    MatchesModule,
   ],
   controllers: [],
   providers: [],
