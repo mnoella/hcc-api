@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { NewsEntity } from "./entities/news.entity";
 import { Repository } from "typeorm";
+import { CreateNewsDto } from "./dto/create-news.dto";
 
 @Injectable()
 export class NewsService {
@@ -11,7 +12,7 @@ export class NewsService {
         private newsRepository: Repository<NewsEntity>,
     ) {}
 
-    async create(newsData: any, author: any): Promise<NewsEntity> {
+    async create(newsData: CreateNewsDto, author: any): Promise<NewsEntity> {
         const news = this.newsRepository.create({...newsData, author,});
         return this.newsRepository.save(news);
     }

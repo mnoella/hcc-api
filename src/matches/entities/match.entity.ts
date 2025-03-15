@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToMany, OneToMany, PrimaryColumn, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Column, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { UserEntity } from "src/users/entities/user.entity";
 import { MatchRegistrationEntity } from "./match-registration.entity";
 
@@ -19,7 +19,7 @@ export class MatchEntity {
     @Column({ default: 0 })
     opponentScore: number;
 
-    @ManyToMany(() => UserEntity)
+    @ManyToOne(() => UserEntity)
     createdBy: UserEntity;
 
     @OneToMany(
